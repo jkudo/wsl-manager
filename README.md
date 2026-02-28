@@ -98,15 +98,17 @@ Automatically adds `kernelCommandLine = cgroup_no_v1=all` to `.wslconfig` on eve
 | Action | Description |
 |--------|-------------|
 | **Remove** | Unregister a distribution with double confirmation (type the name to confirm) |
+| **Remove Multiple** | Bulk-remove selected distributions (from `…` menu or Command Palette) |
 | **Set as Default** | Change the default WSL distribution |
 | **Convert WSL Version** | Switch a distribution between WSL 1 and WSL 2 |
 
-### Backup & Restore
+### Backup, Restore & Clone
 
 | Action | Description |
 |--------|-------------|
 | **Export** | Export a distribution to tar or VHDX format |
 | **Import** | Import a distribution from a tar or VHDX file |
+| **Clone** | Duplicate an existing distribution with optional user configuration |
 
 ### Development Tools
 
@@ -115,7 +117,7 @@ Automatically adds `kernelCommandLine = cgroup_no_v1=all` to `.wslconfig` on eve
 | **Open Terminal** | Launch the distribution in the VS Code integrated terminal (opens in home directory) |
 | **Open in VS Code (WSL)** | Connect to the distribution via the WSL remote extension |
 | **Edit .wslconfig** | Edit global WSL settings (`%USERPROFILE%\.wslconfig`) |
-| **Edit wsl.conf** | Edit per-distribution settings (opens via `vscode-remote://`) |
+| **Edit wsl.conf** | Edit per-distribution settings (opens via `\\wsl.localhost\`) |
 
 ## Usage
 
