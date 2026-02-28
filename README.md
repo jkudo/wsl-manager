@@ -2,6 +2,8 @@
 
 Manage your Windows Subsystem for Linux distributions directly from the VS Code sidebar.
 
+![WSL Manager Demo](resources/wslmanager.gif)
+
 ## Features
 
 ### Sidebar View
@@ -40,6 +42,7 @@ Click the WSL icon in the Activity Bar to see all installed distributions with t
 | **Open in VS Code (WSL)** | Connect via WSL remote |
 | **Edit .wslconfig** | Edit global WSL settings |
 | **Edit wsl.conf** | Edit per-distribution settings |
+| **Toggle cgroup v1** | Enable/disable `cgroup_no_v1=all` in .wslconfig |
 
 ## Usage
 
