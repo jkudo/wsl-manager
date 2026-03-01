@@ -91,7 +91,33 @@ runcmd:
 
 ### cgroup v1 Management
 
-Automatically adds `kernelCommandLine = cgroup_no_v1=all` to `.wslconfig` on every install. This can also be toggled on or off manually with the **Toggle cgroup v1** command, which optionally restarts WSL to apply the change.
+Automatically adds `kernelCommandLine = cgroup_no_v1=all` to `.wslconfig` on every install. This can be changed in **WSL Settings** under the Kernel section.
+
+### WSL Settings Editor
+
+A VS Code-style settings GUI for `.wslconfig`. Open from the `…` menu → **WSL Settings**.
+
+| Category | Settings |
+|----------|----------|
+| **Memory & CPU** | Memory, Processors, Swap, Swap File Path |
+| **Networking** | Networking Mode (NAT/Mirrored), DNS Tunneling, DNS Proxy, Firewall, Auto Proxy, Localhost Forwarding |
+| **Virtualization** | Nested Virtualization, GUI Applications (WSLg), VM Idle Timeout |
+| **Disk** | Sparse VHD |
+| **Kernel** | Custom Kernel, Kernel Command Line |
+| **Experimental** | Auto Memory Reclaim, Host Address Loopback |
+
+### Grouping
+
+Organize distributions into custom groups displayed as folders in the sidebar. Drag and drop to move distributions between groups or reorder them.
+
+| Action | Description |
+|--------|-------------|
+| **Create Group** | Add a new group (from title bar or Command Palette) |
+| **Rename Group** | Rename a group (right-click on group) |
+| **Delete Group** | Remove a group; its distributions move to the default group |
+| **Drag & Drop** | Move distributions between groups or reorder groups/distributions |
+
+A default group ("General") always exists and cannot be deleted. New distributions are assigned to a group during the install wizard. If only one group exists, assignment is automatic.
 
 ### Distribution Management
 
@@ -116,7 +142,7 @@ Automatically adds `kernelCommandLine = cgroup_no_v1=all` to `.wslconfig` on eve
 |--------|-------------|
 | **Open Terminal** | Launch the distribution in the VS Code integrated terminal (opens in home directory) |
 | **Open in VS Code (WSL)** | Connect to the distribution via the WSL remote extension |
-| **Edit .wslconfig** | Edit global WSL settings (`%USERPROFILE%\.wslconfig`) |
+| **WSL Settings** | Visual settings editor for `.wslconfig` |
 | **Edit wsl.conf** | Edit per-distribution settings (opens via `\\wsl.localhost\`) |
 
 ## Usage
@@ -136,9 +162,10 @@ Automatically adds `kernelCommandLine = cgroup_no_v1=all` to `.wslconfig` on eve
 ```
 Step 1: Select distribution (Cached / Online)
 Step 2: Enter custom instance name
-Step 3: Select cloud-init config (optional, supported distros only)
-Step 4: Cache/fresh choice or install directory (if applicable)
-Step 5: Username + password (only when no cloud-init and no OOBE)
+Step 3: Select group (if multiple groups exist)
+Step 4: Select cloud-init config (optional, supported distros only)
+Step 5: Cache/fresh choice or install directory (if applicable)
+Step 6: Username + password (only when no cloud-init and no OOBE)
   ↓
 Install → Configure .wslconfig → User setup or cloud-init → Ready
 ```

@@ -1,5 +1,90 @@
 # Change Log
 
+## [0.21.0] - 2025-03-01
+
+### Added
+- WSL Settings Editor: VS Code-style GUI for `.wslconfig`
+  - Webview panel with categorized settings (Memory & CPU, Networking, Virtualization, Disk, Kernel, Experimental)
+  - Toggle switches for boolean settings, dropdowns for select, text/number inputs
+  - Change tracking with visual indicators and change count badge
+  - Save button writes to `.wslconfig` with "Shutdown WSL" prompt
+  - "Open File" button to edit `.wslconfig` as raw text
+  - Side navigation with scroll tracking
+  - VS Code theme-aware (dark/light)
+- Distribution grouping: organize distributions into folder-like groups
+  - Default "General" group always exists and cannot be deleted
+  - Create, rename, delete groups from context menu or Command Palette
+  - Deleting a group moves its distributions to the default group
+- Drag and drop support:
+  - Move distributions between groups
+  - Reorder distributions within a group
+  - Reorder groups
+- Group selection during install wizard (shown when multiple groups exist)
+- OS name (PRETTY_NAME) cached persistently via VS Code globalState
+  - Running distros: fetched and cached on tree expand
+  - Stopped distros: displayed from cache
+- Offline install support: cached distro images can be installed without internet
+- Network mode (NAT / Mirrored) configurable via WSL Settings Editor
+
+### Changed
+- "Edit .wslconfig" renamed to "WSL Settings" and now opens the settings editor
+- Cloud-init selection defaults to "Skip" instead of "Select config"
+- Removed "Toggle cgroup v1" from `...` menu (now configurable in WSL Settings under Kernel Command Line)
+- Removed "Network Mode" standalone menu item (now in WSL Settings under Networking)
+- Removed WSL version from tree item description (shows state only)
+- Kernel Command Line description notes that `cgroup_no_v1=all` is set by this extension, not a WSL default
+
+### Fixed
+- All WSL shell commands now use `execFile` instead of `exec` to bypass Windows `cmd.exe`
+  - Pipe, redirect, and quote characters no longer misinterpreted
+  - Fixes "chpasswd is not recognized" error during user setup from cache
+- User creation checks if user already exists before `useradd`
+
+## [0.20.0] - 2025-03-01
+
+### Added
+- Distribution grouping: organize distributions into folder-like groups
+  - Default "General" group always exists
+  - Create, rename, delete groups from context menu or Command Palette
+  - Deleting a group moves its distributions to the default group
+- Drag and drop support:
+  - Move distributions between groups
+  - Reorder distributions within a group
+  - Reorder groups
+- Group selection during install wizard (shown when multiple groups exist)
+- Group state persisted via VS Code globalState
+
+## [0.19.2] - 2025-03-01
+
+### Changed
+- Removed WSL version from tree item description (now shows state only)
+
+## [0.19.1] - 2025-03-01
+
+### Fixed
+- All WSL shell commands now use execFile instead of exec to bypass Windows cmd.exe
+  - Pipe (|), redirect (<, >), and quote characters no longer misinterpreted
+  - Fixes "chpasswd is not recognized" error during user setup
+- User creation now checks if user already exists (id check) before useradd
+  - Fixes error when installing from cache where user was already present in image
+
+## [0.19.0] - 2025-03-01
+
+### Added
+- OS name (PRETTY_NAME) is now cached persistently via VS Code globalState
+  - Running distros: fetched and cached on tree expand
+  - Stopped distros: displayed from cache
+- Offline install support: when internet is unavailable, cached distro images can still be installed
+  - Separator shows "Cached (Offline)" when online list unavailable
+  - Stale warning does not offer "Download Fresh" when offline
+  - Only shows error when both online list and cache are empty
+
+## [0.18.0] - 2025-03-01
+
+### Changed
+- Tree view: replaced "WSL Version" child item with "OS: <PRETTY_NAME>" from /etc/os-release
+- OS name is fetched when expanding a distribution in the sidebar
+
 ## [0.17.1] - 2025-02-28
 
 ### Fixed
