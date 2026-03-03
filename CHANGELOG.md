@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.22.0] - 2025-03-03
+
+### Changed
+- Reorganized `…` menu order: Shutdown All → Remove Distributions → Clear Cache → WSL Settings
+- Renamed "Remove Multiple Distributions" to "Remove Distributions"
+- Updated extension screenshot
+
 ## [0.21.0] - 2025-03-01
 
 ### Added
