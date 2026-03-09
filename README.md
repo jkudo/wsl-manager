@@ -49,6 +49,22 @@ Supported distributions can be automatically provisioned during install using a 
 
 **How it works:** The extension places the YAML file at `%USERPROFILE%\.cloud-init\<instanceName>.user-data` before the first boot. cloud-init reads it automatically on startup.
 
+**Config Management:** The sidebar includes a "Cloud-Init Configs" section where you can manage your configs:
+
+| Action | Description |
+|--------|-------------|
+| **Import** | Import a YAML file as a saved config (+ button in title bar) |
+| **Edit** | Open config directly in VS Code (saved to storage on Ctrl+S) |
+| **Export** | Save config to a YAML file |
+| **Duplicate** | Create a copy of an existing config |
+| **Rename** | Change the display name |
+| **Delete** | Remove a config |
+| **Group** | Organize configs into groups with drag and drop |
+
+Two built-in sample configs are included: "Default" (common development tools) and "Docker" (Default + Docker CE). Configs are stored as YAML files in `%APPDATA%\Code\User\globalStorage\jkudo.wsl-manager\cloud-init\`.
+
+When installing from cache with cloud-init, the extension automatically resets cloud-init state and runs all stages in the background — no manual terminal interaction needed.
+
 **Supported distributions:**
 
 - AlmaLinux 8 / 9 / 10
@@ -163,7 +179,7 @@ A default group ("General") always exists and cannot be deleted. New distributio
 Step 1: Select distribution (Cached / Online)
 Step 2: Enter custom instance name
 Step 3: Select group (if multiple groups exist)
-Step 4: Select cloud-init config (optional, supported distros only)
+Step 4: Select cloud-init config (saved configs / file / skip)
 Step 5: Cache/fresh choice or install directory (if applicable)
 Step 6: Username + password (only when no cloud-init and no OOBE)
   ↓

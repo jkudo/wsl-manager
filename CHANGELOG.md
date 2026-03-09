@@ -1,5 +1,32 @@
 # Change Log
 
+## [0.23.0] - 2025-03-09
+
+### Added
+- Cloud-Init Config management sidebar section
+  - Built-in "Default" and "Docker" sample configs
+  - Grouping with drag and drop (same as distribution groups)
+  - Import configs from YAML files
+  - Edit configs directly in VS Code (files stored in globalStorageUri)
+  - Export, rename, duplicate, delete configs
+  - Tree view shows config details (user, package count)
+- Cloud-init configs stored as real YAML files
+  - Location: `%APPDATA%\Code\User\globalStorage\jkudo.wsl-manager\cloud-init\`
+  - Metadata (names, groups, order) stored in globalState
+- Install wizard now lists saved cloud-init configs
+  - Quick-select from saved configs or "Select from file..."
+  - Skip remains the default selection
+- Cache + cloud-init support
+  - Automatic cloud-init state reset for cached images (`cleanAndRunCloudInit`)
+  - Runs all cloud-init stages in background (no terminal interaction needed)
+  - Auto-restart after cloud-init to apply `wsl.conf` default user
+- Existing user detection when installing from cache
+  - Offers to reuse existing configured user or set up new one
+
+### Fixed
+- `setupUser` no longer overwrites `/etc/wsl.conf` — uses safe sed-based update
+- Cloud-init user-data placement order fixed (place before clean/boot)
+
 ## [0.22.0] - 2025-03-03
 
 ### Changed
