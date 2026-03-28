@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.24.0] - 2025-03-27
+
+### Fixed
+- Fixed incorrect distribution display when no WSL distributions are installed
+  - Error messages from `wsl --list --verbose` were being parsed as distribution entries
+  - Added validation: STATE must be a known value (Running/Stopped/etc.) and VERSION must be 1 or 2
+
 ## [0.23.0] - 2025-03-09
 
 ### Added
