@@ -1,5 +1,15 @@
 # Change Log
 
+## [0.24.1] - 2025-03-27
+
+### Fixed
+- Cache-based installation failed with bash syntax error when updating `/etc/wsl.conf`
+  - `execFile` collapses newlines into single spaces, breaking multi-line scripts and variable definitions
+  - Also `; ` joining produced invalid syntax like `then; if ...; then`
+  - Rewrote `wsl.conf` update scripts as single-line constructs without shell variables
+  - Uses `sed` delimiter `|` to avoid conflicts with patterns containing `/`
+  - Affects both `setupUser` (new cache install) and `setDefaultUser` (existing user reuse)
+
 ## [0.24.0] - 2025-03-27
 
 ### Fixed
