@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.24.2] - 2025-03-27
+
+### Changed
+- Added disclaimer to README: this extension is community-developed and not affiliated with Microsoft
+
 ## [0.24.1] - 2025-03-27
 
 ### Fixed

@@ -2,6 +2,8 @@
 
 Manage your Windows Subsystem for Linux distributions directly from the VS Code sidebar.
 
+> **Note:** This is a community-developed extension and is not affiliated with, endorsed by, or supported by Microsoft. "Windows Subsystem for Linux" and "WSL" are trademarks of Microsoft Corporation.
+
 ![WSL Manager Demo](resources/wslmanager.gif)
 
 ## Features
