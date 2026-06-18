@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.24.3] - 2025-06-18
+
+### Changed
+- Renamed "Open in VS Code (WSL)" to "Connect to WSL"
+  - Connects to the distribution without opening a folder
+  - Opens a new VS Code window with WSL remote authority only
+
 ## [0.24.2] - 2025-03-27
 
 ### Changed
