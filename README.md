@@ -30,7 +30,7 @@ If your WSL version includes the [WSL container](https://learn.microsoft.com/en-
 | **Run Interactive Container** | Start a new container from an image and land directly in its shell in a terminal (works even for images whose default command exits immediately) |
 | **Start / Stop** | Manage the container lifecycle |
 | **Open Shell** | Open a terminal inside a running container (bash if available, otherwise sh) |
-| **Connect VS Code** | Attach a VS Code window to a running container via the Dev Containers extension (requires a wslc version with Docker-compatible CLI support; the extension checks and warns first) |
+| **Connect VS Code** | Attach a VS Code window to a running container via the Dev Containers extension (pre-release version required — see Requirements) |
 | **Show Logs** | View recent container logs in an output channel |
 | **Remove / Prune** | Remove a container or all stopped containers |
 | **Image actions** | Run a container from an image, remove an image, prune unused images |
@@ -167,7 +167,7 @@ A default group ("General") always exists and cannot be deleted. New distributio
 
 | Action | Description |
 |--------|-------------|
-| **Remove** | Unregister a distribution with double confirmation (type the name to confirm) |
+| **Remove** | Unregister a distribution with double confirmation (type the name to confirm; can be relaxed with `wslManager.confirmBeforeRemove`) |
 | **Remove Multiple** | Bulk-remove selected distributions (from `…` menu or Command Palette) |
 | **Set as Default** | Change the default WSL distribution |
 | **Convert WSL Version** | Switch a distribution between WSL 1 and WSL 2 |
@@ -185,9 +185,11 @@ A default group ("General") always exists and cannot be deleted. New distributio
 | Action | Description |
 |--------|-------------|
 | **Open Terminal** | Launch the distribution in the VS Code integrated terminal (opens in home directory) |
-| **Open in VS Code (WSL)** | Connect to the distribution via the WSL remote extension |
+| **Connect to WSL** | Open a VS Code window connected to the distribution via the WSL remote extension |
 | **WSL Settings** | Visual settings editor for `.wslconfig` |
-| **Edit wsl.conf** | Edit per-distribution settings (opens via `\\wsl.localhost\`) |
+| **Edit wsl.conf** | Edit per-distribution settings in a local copy; saving writes it back to `/etc/wsl.conf` as root and offers to restart the distribution. Works when the default user is not root, and independently of the automount/interop settings that wsl.conf itself controls |
+
+> **If you disable `[interop]` or `[automount]` in wsl.conf:** the WSL remote extension normally starts its server through a script that depends on those features, so **Connect to WSL** can stop working after the distribution restarts. The fix is the WSL extension's scriptless startup mode — add `"remote.WSL.experimental.scriptLessStartup": true` to your VS Code settings (Settings → search "scriptless"). "Edit wsl.conf" itself is not affected: it writes over stdin precisely so you can always edit the settings back.
 
 ## Usage
 
@@ -203,7 +205,7 @@ A default group ("General") always exists and cannot be deleted. New distributio
 
 ### Install Wizard Flow
 
-```
+```text
 Step 1: Select distribution (Cached / Online)
 Step 2: Enter custom instance name
 Step 3: Select group (if multiple groups exist)

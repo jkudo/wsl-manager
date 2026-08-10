@@ -1,12 +1,23 @@
 # Change Log
 
+## [0.25.2] - 2026-08-10
+
+### Fixed
+
+- "Edit wsl.conf" saving broke itself after disabling automount: the 0.25.1 write path staged the content in a Windows temp file and resolved it with `wslpath`, which requires automount — and wsl.conf is the very file that controls automount, so saving `[automount] enabled=false` blocked every subsequent save
+  - The content is now piped over stdin (`sh -c "cat > /etc/wsl.conf"`), which depends on neither automount nor interop; read-back verification is kept
+
+### Documentation
+
+- Document the workaround for VS Code itself when wsl.conf disables `[interop]` or `[automount]`: the WSL remote extension's script-based server startup breaks ("Connect to WSL"), and enabling `"remote.WSL.experimental.scriptLessStartup": true` fixes it
+
 ## [0.25.1] - 2026-08-10
 
 ### Fixed
 
 - "Edit wsl.conf" could not save when the distribution's default user was not root (`EPERM` even with Windows elevation, since Windows admin is not Linux root)
   - The command opened `\\wsl.localhost\<distro>\etc\wsl.conf` directly, and UNC writes run as the default user while `/etc/wsl.conf` is root-owned
-  - It now opens a local editing copy and writes it back as root on save (staged through a temp file, `wslpath`-resolved, verified by reading back; line endings normalized to LF)
+  - It now opens a local editing copy and writes it back as root on save (verified by reading back; line endings normalized to LF)
   - A "Restart Distribution" action is offered after saving so the changes can take effect
   - The `security.allowedUNCHosts` global setting is no longer modified (it was only needed for the UNC approach)
 
