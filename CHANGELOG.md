@@ -1,8 +1,59 @@
 # Change Log
 
+## [0.25.1] - 2026-08-10
+
+### Fixed
+
+- "Edit wsl.conf" could not save when the distribution's default user was not root (`EPERM` even with Windows elevation, since Windows admin is not Linux root)
+  - The command opened `\\wsl.localhost\<distro>\etc\wsl.conf` directly, and UNC writes run as the default user while `/etc/wsl.conf` is root-owned
+  - It now opens a local editing copy and writes it back as root on save (staged through a temp file, `wslpath`-resolved, verified by reading back; line endings normalized to LF)
+  - A "Restart Distribution" action is offered after saving so the changes can take effect
+  - The `security.allowedUNCHosts` global setting is no longer modified (it was only needed for the UNC approach)
+
+## [0.25.0] - 2026-07-31
+
+### Fixed
+
+- Four settings were declared and documented but never read, so changing them did nothing. They now work:
+  - `autoRefreshInterval` — the tree refresh timer was hardcoded to 30s; it now follows the setting and reacts to changes without a reload
+  - `confirmBeforeRemove` — set to `false` to skip the type-the-name second confirmation when removing a distribution
+  - `defaultExportFormat` — the configured format is listed first and marked as the default in the export picker
+  - `showInlineActions` — set to `false` to hide the inline buttons on tree rows
+- The "No WSL distributions found" welcome view never appeared, so systems without WSL saw only an empty "General" group with no install guidance
+  - The tree always rendered at least the default group, and VS Code shows a welcome view only for an empty tree
+  - Groups are now hidden when there are no distributions; added an "Install Distribution" link for the case where WSL is installed but has no distributions
+  - The wslc hint is also suppressed in that state (wslc ships with WSL, so it is redundant there)
+
+### Added
+
+- WSL container (wslc) support — public preview feature of WSL
+  - New "Containers" and "Images" sections in the Distributions tree view
+  - Container operations: run new container (with optional name and port mapping), start, stop, remove, show logs, open shell inside a running container, prune stopped containers
+  - "Run Interactive Container" on images: opens a terminal running `wslc run -it` so you land directly in a shell inside a new container (works for images whose default command exits immediately, e.g. alpine)
+  - "Run New Container" takes an optional command, and warns with a "Show Logs" action when the container exits immediately (the image's default command finishes right away when detached)
+  - "Restore Dev Containers Docker Path" command undoes the global `dev.containers.dockerPath` change made when connecting (the previous value is remembered)
+  - "Connect VS Code to Container" on running containers: opens a VS Code window attached to the container via the Dev Containers extension (offers to install it and to set `dev.containers.dockerPath` to wslc)
+    - Requires the Dev Containers pre-release, which recognizes wslc as a container runtime (detected from `wslc -v`)
+    - Works around a gap in wslc 2.9.4: its `inspect` output omits `Config.Image`, which makes Dev Containers throw `TypeError: Cannot read properties of undefined (reading 'replace')`. A minimal per-container attach config is created beforehand so Dev Containers returns before reading that field
+  - Image operations: run container from image, remove image (with force-remove retry), prune unused images
+  - Availability is auto-detected via `wslc version` (probed once per session); when wslc is not installed a hint entry offers `wsl --update --pre-release`
+  - Output parsing is locale-independent: uses `--format json` with running-state classification by ID diff between the running-only and `--all` lists; falls back to positional table parsing on older previews (table headers are localized and never matched by name)
+  - New settings: `wslManager.containers.enabled` (default: true), `wslManager.containers.wslcPath` (advanced path override)
+  - Containers keep the `package` icon in both states (green when running) so they are not mistaken for distributions, which use the `vm` icons
+  - The Containers and Images sections start expanded like distribution groups, and remember whether you collapsed them across restarts
+
+## [0.24.4] - 2025-06-18
+
+### Fixed
+
+- Terminal fails with "Path to shell executable 'wsl.exe' does not exist" when connected to WSL via Remote
+  - Added `wsl.exe` path resolution: uses `wsl.exe` on Windows, falls back to `/mnt/c/Windows/System32/wsl.exe` inside WSL (supports `appendWindowsPath=false`)
+  - All terminal creation and command execution now use the resolved path
+
 ## [0.24.3] - 2025-06-18
 
 ### Changed
+
 - Renamed "Open in VS Code (WSL)" to "Connect to WSL"
   - Connects to the distribution without opening a folder
   - Opens a new VS Code window with WSL remote authority only
@@ -10,14 +61,16 @@
 ## [0.24.2] - 2025-03-27
 
 ### Changed
+
 - Added disclaimer to README: this extension is community-developed and not affiliated with Microsoft
 
 ## [0.24.1] - 2025-03-27
 
 ### Fixed
+
 - Cache-based installation failed with bash syntax error when updating `/etc/wsl.conf`
   - `execFile` collapses newlines into single spaces, breaking multi-line scripts and variable definitions
-  - Also `; ` joining produced invalid syntax like `then; if ...; then`
+  - Also `"; "` joining produced invalid syntax like `then; if ...; then`
   - Rewrote `wsl.conf` update scripts as single-line constructs without shell variables
   - Uses `sed` delimiter `|` to avoid conflicts with patterns containing `/`
   - Affects both `setupUser` (new cache install) and `setDefaultUser` (existing user reuse)
@@ -25,6 +78,7 @@
 ## [0.24.0] - 2025-03-27
 
 ### Fixed
+
 - Fixed incorrect distribution display when no WSL distributions are installed
   - Error messages from `wsl --list --verbose` were being parsed as distribution entries
   - Added validation: STATE must be a known value (Running/Stopped/etc.) and VERSION must be 1 or 2
@@ -32,6 +86,7 @@
 ## [0.23.0] - 2025-03-09
 
 ### Added
+
 - Cloud-Init Config management sidebar section
   - Built-in "Default" and "Docker" sample configs
   - Grouping with drag and drop (same as distribution groups)
@@ -53,12 +108,14 @@
   - Offers to reuse existing configured user or set up new one
 
 ### Fixed
+
 - `setupUser` no longer overwrites `/etc/wsl.conf` — uses safe sed-based update
 - Cloud-init user-data placement order fixed (place before clean/boot)
 
 ## [0.22.0] - 2025-03-03
 
 ### Changed
+
 - Reorganized `…` menu order: Shutdown All → Remove Distributions → Clear Cache → WSL Settings
 - Renamed "Remove Multiple Distributions" to "Remove Distributions"
 - Updated extension screenshot
@@ -66,6 +123,7 @@
 ## [0.21.0] - 2025-03-01
 
 ### Added
+
 - WSL Settings Editor: VS Code-style GUI for `.wslconfig`
   - Webview panel with categorized settings (Memory & CPU, Networking, Virtualization, Disk, Kernel, Experimental)
   - Toggle switches for boolean settings, dropdowns for select, text/number inputs
@@ -90,6 +148,7 @@
 - Network mode (NAT / Mirrored) configurable via WSL Settings Editor
 
 ### Changed
+
 - "Edit .wslconfig" renamed to "WSL Settings" and now opens the settings editor
 - Cloud-init selection defaults to "Skip" instead of "Select config"
 - Removed "Toggle cgroup v1" from `...` menu (now configurable in WSL Settings under Kernel Command Line)
@@ -98,6 +157,7 @@
 - Kernel Command Line description notes that `cgroup_no_v1=all` is set by this extension, not a WSL default
 
 ### Fixed
+
 - All WSL shell commands now use `execFile` instead of `exec` to bypass Windows `cmd.exe`
   - Pipe, redirect, and quote characters no longer misinterpreted
   - Fixes "chpasswd is not recognized" error during user setup from cache
@@ -106,6 +166,7 @@
 ## [0.20.0] - 2025-03-01
 
 ### Added
+
 - Distribution grouping: organize distributions into folder-like groups
   - Default "General" group always exists
   - Create, rename, delete groups from context menu or Command Palette
@@ -120,11 +181,13 @@
 ## [0.19.2] - 2025-03-01
 
 ### Changed
+
 - Removed WSL version from tree item description (now shows state only)
 
 ## [0.19.1] - 2025-03-01
 
 ### Fixed
+
 - All WSL shell commands now use execFile instead of exec to bypass Windows cmd.exe
   - Pipe (|), redirect (<, >), and quote characters no longer misinterpreted
   - Fixes "chpasswd is not recognized" error during user setup
@@ -134,6 +197,7 @@
 ## [0.19.0] - 2025-03-01
 
 ### Added
+
 - OS name (PRETTY_NAME) is now cached persistently via VS Code globalState
   - Running distros: fetched and cached on tree expand
   - Stopped distros: displayed from cache
@@ -145,17 +209,20 @@
 ## [0.18.0] - 2025-03-01
 
 ### Changed
+
 - Tree view: replaced "WSL Version" child item with "OS: <PRETTY_NAME>" from /etc/os-release
 - OS name is fetched when expanding a distribution in the sidebar
 
 ## [0.17.1] - 2025-02-28
 
 ### Fixed
+
 - README: corrected Edit wsl.conf description to reflect UNC path usage
 
 ## [0.17.0] - 2025-02-28
 
 ### Added
+
 - Remove Multiple Distributions: bulk-remove with multi-select checkbox
 - Available from the view title menu (...) and Command Palette
 - Double confirmation: first modal warning with list, then type the count to confirm
@@ -165,11 +232,13 @@
 ## [0.16.6] - 2025-02-28
 
 ### Fixed
+
 - Edit wsl.conf: auto-add `wsl.localhost` to VS Code `security.allowedUNCHosts` setting before opening
 
 ## [0.16.5] - 2025-02-28
 
 ### Fixed
+
 - Edit wsl.conf: switched from vscode-remote:// to UNC path (\\wsl.localhost\\) for reliable file opening without WSL extension dependency
 - Auto-starts the distribution if stopped before opening wsl.conf
 - Keeps warning + confirmation when creating a new wsl.conf
@@ -177,6 +246,7 @@
 ## [0.16.4] - 2025-02-28
 
 ### Fixed
+
 - wsl.conf creation: warn user then create only on confirmation
 - Fixed Windows cmd.exe quoting issues in all WSL shell commands
   - hasWslConf: use `test -f` (no quoting needed)
@@ -188,16 +258,19 @@
 ## [0.16.3] - 2025-02-28
 
 ### Changed
+
 - Edit wsl.conf now warns and asks for confirmation before creating the file when it does not exist
 
 ## [0.16.2] - 2025-02-28
 
 ### Fixed
+
 - Edit wsl.conf now creates the file if it does not exist, fixing "Unable to resolve resource" error on distros without a pre-existing wsl.conf
 
 ## [0.16.1] - 2025-02-27
 
 ### Changed
+
 - Clone wizard now includes user configuration step with three options:
   - Create new user: username + password, set as default login user
   - Set existing user as default: change the default login user to an existing account
@@ -208,6 +281,7 @@
 ## [0.16.0] - 2025-02-27
 
 ### Added
+
 - Clone Distribution command: duplicate an existing distro under a new name
 - Available from context menu (right-click) and Command Palette
 - Clone preserves WSL version of the source distribution
@@ -216,11 +290,13 @@
 ## [0.15.1] - 2025-02-27
 
 ### Changed
+
 - Comprehensive README rewrite covering all features: install wizard, cache, cloud-init, cgroup management, settings
 
 ## [0.15.0] - 2025-02-27
 
 ### Added
+
 - cloud-init support for compatible distributions during install
 - Optional step to select a cloud-init user-data YAML file
 - Simple validation (checks for #cloud-config header)
@@ -231,6 +307,7 @@
 ## [0.14.0] - 2025-02-27
 
 ### Changed
+
 - Distro selection now shows cached images at the top with a "Cached" separator
 - Selecting a cached distro skips the cache/fresh choice (with stale warning if expired)
 - Cache clear now uses multi-select for individual distro deletion
@@ -238,6 +315,7 @@
 ## [0.13.0] - 2025-02-27
 
 ### Added
+
 - Distribution image cache system for faster repeated installs
 - Cache enabled by default (`wslManager.cache.enabled`)
 - Configurable cache expiry warning (`wslManager.cache.expiryDays`, default 30)
@@ -246,6 +324,7 @@
 - Stale cache warning when image exceeds expiry threshold
 
 ### Changed
+
 - --name install path now exports to cache after install for future reuse
 - Legacy install path saves exported tar to cache
 - Cache-based install uses import + setupUser flow
@@ -253,23 +332,27 @@
 ## [0.11.0] - 2025-02-27
 
 ### Added
+
 - Demo GIF in README for intuitive overview
 - Toggle cgroup v1 entry in README features table
 
 ## [0.10.0] - 2025-02-27
 
 ### Fixed
+
 - WSL version detection now normalizes non-ASCII characters before parsing
 - Added --help fallback when version string parsing fails (encoding issues)
 
 ## [0.9.0] - 2025-02-27
 
 ### Changed
+
 - WSL --name support detection now checks version >= 2.4.4 instead of parsing --help
 
 ## [0.8.0] - 2025-02-27
 
 ### Changed
+
 - Native --name install now uses OOBE for user setup (2 steps + terminal)
 - OOBE provides proper distro-specific initialization (sudo NOPASSWD, UID 1000, etc.)
 - Legacy export/import path retains manual user creation (5 steps)
@@ -277,6 +360,7 @@
 ## [0.7.0] - 2025-02-27
 
 ### Added
+
 - Auto-add `kernelCommandLine = cgroup_no_v1=all` to .wslconfig on install
 - Toggle command to enable/disable cgroup_no_v1 setting (with optional WSL restart)
 - Updated .wslconfig template to include cgroup_no_v1=all by default
@@ -284,10 +368,12 @@
 ## [0.6.0] - 2025-02-27
 
 ### Added
+
 - Auto-detect WSL --name flag support and use native install when available
 - Legacy export/import fallback for older WSL versions
 
 ### Changed
+
 - Install wizard shows 4 steps (with --name) or 5 steps (legacy) depending on WSL version
 - Install directory selection only shown in legacy mode
 - Temporary distro hiding only applied in legacy mode
@@ -295,27 +381,32 @@
 ## [0.5.0] - 2025-02-27
 
 ### Fixed
+
 - Edit wsl.conf now uses vscode-remote URI instead of UNC path to avoid security errors
 
 ## [0.4.0] - 2025-02-27
 
 ### Fixed
+
 - Detail items (State, WSL Version) now show correct tooltip instead of "Unknown"
 
 ## [0.3.0] - 2025-02-27
 
 ### Changed
+
 - Set Default no longer shows a notification popup
 - Removed "Default Distribution" detail item from the tree view
 
 ## [0.2.0] - 2025-02-27
 
 ### Added
+
 - Custom instance naming for installations (always required, online distro names are reserved)
 - User creation wizard during install (username, password, sudo group)
 - Hidden temporary distributions from sidebar during install
 
 ### Changed
+
 - Terminal now opens in the user's home directory instead of the Windows mount path
 - Terminals are automatically closed when stopping or removing a distribution
 - Simplified install flow by removing complex backup/restore logic
@@ -323,6 +414,7 @@
 ## [0.1.0] - 2025-02-27
 
 ### Added
+
 - Activity Bar view with WSL Manager sidebar
 - Distribution list showing name, state, WSL version, and default indicator
 - Start, stop, and shutdown all distributions

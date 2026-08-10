@@ -20,6 +20,32 @@ Click the WSL icon in the Activity Bar to see all installed distributions with t
 | **Stop** | Stop a running distribution |
 | **Shutdown All** | Stop all running WSL instances at once |
 
+### WSL Containers (Preview)
+
+If your WSL version includes the [WSL container](https://learn.microsoft.com/en-us/windows/wsl/wsl-container) preview feature (`wslc.exe`), the sidebar shows **Containers** and **Images** sections:
+
+| Action | Description |
+|--------|-------------|
+| **Run New Container** | Pick an image (or enter a reference), optionally set a name and port mapping — the container starts detached |
+| **Run Interactive Container** | Start a new container from an image and land directly in its shell in a terminal (works even for images whose default command exits immediately) |
+| **Start / Stop** | Manage the container lifecycle |
+| **Open Shell** | Open a terminal inside a running container (bash if available, otherwise sh) |
+| **Connect VS Code** | Attach a VS Code window to a running container via the Dev Containers extension (requires a wslc version with Docker-compatible CLI support; the extension checks and warns first) |
+| **Show Logs** | View recent container logs in an output channel |
+| **Remove / Prune** | Remove a container or all stopped containers |
+| **Image actions** | Run a container from an image, remove an image, prune unused images |
+
+If `wslc.exe` is not detected, a hint entry appears instead — WSL containers currently require the WSL pre-release channel (`wsl --update --pre-release`). The sections can be hidden with the `wslManager.containers.enabled` setting.
+
+#### What "Connect VS Code" changes on your machine
+
+Attaching VS Code to a container goes through the Dev Containers extension, so this command touches two things outside this extension. Both are disclosed here because they affect other tools:
+
+| Change | Details |
+|--------|---------|
+| `dev.containers.dockerPath` | Set to `wslc.exe` so Dev Containers drives WSL containers instead of Docker. **Global setting** — you are asked before it is changed, the previous value is remembered, and **"WSL Manager: Restore Dev Containers Docker Path"** puts it back. While it points at wslc, Dev Containers will not manage Docker containers. |
+| A per-container attach config | A minimal `{}` file is created in the Dev Containers extension's storage (`nameConfigs/<container>.json`) — the same file its own "Open Attach Container Configuration File" command creates. This works around a gap in wslc 2.9.4, whose `inspect` output omits `Config.Image` and makes Dev Containers fail with a `TypeError`. It is only created when that field is actually missing, and existing files are never overwritten. |
+
 ### Install with Custom Instance Name
 
 Install new distributions from the online catalog (`wsl --list --online`) and assign a custom instance name. The extension automatically detects your WSL version and selects the best installation strategy:
@@ -198,12 +224,21 @@ Install → Configure .wslconfig → User setup or cloud-init → Ready
 | `wslManager.showInlineActions` | `true` | Show inline action buttons in the tree view |
 | `wslManager.cache.enabled` | `true` | Cache distribution images locally |
 | `wslManager.cache.expiryDays` | `30` | Days before a cached image is considered stale (1–365) |
+| `wslManager.containers.enabled` | `true` | Show the Containers and Images sections (requires wslc) |
+| `wslManager.containers.wslcPath` | `""` | Override the path to `wslc.exe` (advanced; empty = auto-detect) |
 
 ## Requirements
 
 - Windows 10 (21H2+) or Windows 11
 - WSL installed and enabled
 - VS Code 1.85.0 or later
+
+The container features are optional and detected at runtime — without them the extension works exactly as before:
+
+| Feature | Additional requirement |
+|---------|------------------------|
+| Containers / Images sections | A WSL version that ships `wslc.exe` (WSL container is in public preview: `wsl --update --pre-release`) |
+| Connect VS Code to Container | The [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension, **pre-release version** (it is the version that recognizes wslc as a container runtime) |
 
 ## License
 
