@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.25.3] - 2026-08-12
+
+### Fixed
+
+- "Open Terminal" (and the container shell/PowerShell terminals) failed with `Path to shell executable "wsl.exe" does not exist` when used from a Remote-WSL window connected to a distribution with `appendWindowsPath=false`
+  - Terminals launch on the remote side in remote windows, and without the appended Windows PATH the bare `wsl.exe` cannot be resolved there
+  - In remote WSL windows the extension now uses absolute `/mnt/c/...` paths for wsl.exe, wslc.exe and powershell.exe (requires interop; a distro with `[interop] enabled=false` cannot launch Windows executables at all — open the terminal from a local window instead)
+
 ## [0.25.2] - 2026-08-10
 
 ### Fixed
