@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.26.1] - 2026-09-24
+
+### Fixed
+
+- "Connect to WSL" / "Connect to WSL via SSH" on a stopped distribution failed with `Command failed: ssh ... true`. Right after the distribution starts, sshd is already listening but for a few seconds the connection is refused or gets no banner, and the single connection test timed out. The test now retries (up to six attempts, 15 s each), and stops at once on authentication or host-key errors
+
 ## [0.26.0] - 2026-09-23
 
 ### Added
