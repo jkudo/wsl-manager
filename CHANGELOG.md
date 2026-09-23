@@ -1,5 +1,31 @@
 # Change Log
 
+## [0.26.0] - 2026-09-23
+
+### Added
+
+- **Connect over Remote-SSH when interop is disabled.** With `[interop] enabled=false` in wsl.conf (a common way to keep tools inside the distribution away from `/mnt/c` and Windows executables), the WSL remote extension cannot start its server and the window fails with "WebSocket close with status code 1006". WSL Manager now connects such distributions through the Remote - SSH extension instead:
+  - "Connect to WSL" switches automatically (setting `wslManager.ssh.useWhenInteropDisabled`, default on); a new "Connect to WSL via SSH" command forces the SSH path for any distribution
+  - First use asks for confirmation and prepares the distribution: installs `openssh-server` (plus `tar`/`gzip`/`curl` when the image lacks them), configures sshd on a distribution-specific port with key authentication only, and authorizes the local `~/.ssh/id_ed25519.pub` (generated if missing) for the default user
+  - Writes a managed `Host wsl-<distro>` block to `~/.ssh/config`, registers the host in `remote.SSH.remotePlatform`, verifies the connection, then opens the window
+  - Keeps a hidden background session so WSL does not stop the distribution (and sshd with it) once the last session ends; "Stop" and "Shutdown All" end it
+  - Ports are allocated per distribution from `wslManager.ssh.portRangeStart` (default 2222) and read back from the distribution's own sshd configuration, so distributions coexist under mirrored networking
+  - Works around a VS Code CLI hang on distributions whose OpenSSL config includes crypto-policies (openSUSE, Fedora family) by passing `OPENSSL_CONF=/dev/null` only to sessions opened through the extension
+- The tree shows each distribution's interop state: an "Interop: disabled" detail row, and "Connect to WSL" greyed out in the context menu in favour of "Connect to WSL via SSH"
+- New settings `wslManager.ssh.useWhenInteropDisabled` and `wslManager.ssh.portRangeStart`
+- Verified against every distribution in `wsl --list --online` (Ubuntu ×4, Debian, Kali, eLxr, openSUSE ×2, SUSE Linux Enterprise ×3, Fedora ×2, AlmaLinux ×4, Oracle Linux ×3, Arch) in both connection modes; results and the remaining distribution-specific constraints are in `docs/distro-verification.md`, and the harness that produced them is in `scripts/verify-distros/`
+
+### Fixed
+
+- **cloud-init on images without cloud-init.** Installing with a cloud-init config into an image that does not ship it (openSUSE Leap 16.0, for example) reported success while nothing had run and no user existed. The extension now checks for cloud-init right after installing; when it is missing, or finishes without creating a user, it removes the unused user-data and opens the setup terminal so the distribution's own first-run wizard performs the initial setup
+- **Legacy (appx) distributions** such as Oracle Linux and SUSE Linux Enterprise 15 SP6 failed silently to install on current WSL, which rejects `--install --name` for them and only installs the package. The install flow now registers the distribution through the package's launcher and continues with the export/import path to apply the chosen name
+- SSH setup robustness found during the verification: no dependency on `awk`/`ss` (absent from Fedora images); pacman keyring initialized on Arch; dnf abandons mirrors slower than 100 KB/s instead of hanging for minutes; sshd configuration works with vendor configs under `/usr/etc` (openSUSE) and with OpenSSH older than 8.2, which has no `Include` (Oracle Linux 7.9)
+- The setup terminals opened by the install flow use the remote-aware wsl.exe path, like "Open Terminal"
+
+### Changed
+
+- Context menu cleanup: "Convert WSL Version (1 ↔ 2)" is shown only for WSL 1 distributions (still available from the Command Palette); "Start Distribution" / "Stop Distribution" are now "Start" / "Stop" and both are always listed (inline buttons still follow the state); "Set as Default" moved next to Export/Clone, just above "Remove Distribution"
+
 ## [0.25.3] - 2026-08-12
 
 ### Fixed

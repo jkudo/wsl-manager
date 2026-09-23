@@ -77,6 +77,8 @@ Supported distributions can be automatically provisioned during install using a 
 
 **How it works:** The extension places the YAML file at `%USERPROFILE%\.cloud-init\<instanceName>.user-data` before the first boot. cloud-init reads it automatically on startup.
 
+**Only images that ship cloud-init can use this.** WSL merely puts the file where cloud-init looks; if the image does not include cloud-init (openSUSE Leap 16.0, for example), the file is never read. The extension checks for cloud-init right after installing and, when it is missing, falls back to the distribution's own initial setup: it opens a terminal so the first-run wizard (`[oobe] command` in the image's `wsl-distribution.conf`) can create the user the way the distribution intends. It does not create users by itself in that case. The same fallback applies when cloud-init ran but created no user.
+
 **Config Management:** The sidebar includes a "Cloud-Init Configs" section where you can manage your configs:
 
 | Action | Description |
@@ -170,7 +172,7 @@ A default group ("General") always exists and cannot be deleted. New distributio
 | **Remove** | Unregister a distribution with double confirmation (type the name to confirm; can be relaxed with `wslManager.confirmBeforeRemove`) |
 | **Remove Multiple** | Bulk-remove selected distributions (from `…` menu or Command Palette) |
 | **Set as Default** | Change the default WSL distribution |
-| **Convert WSL Version** | Switch a distribution between WSL 1 and WSL 2 |
+| **Convert WSL Version** | Switch a distribution between WSL 1 and WSL 2. Shown in the context menu only for WSL 1 distributions; always available from the Command Palette |
 
 ### Backup, Restore & Clone
 
@@ -185,11 +187,36 @@ A default group ("General") always exists and cannot be deleted. New distributio
 | Action | Description |
 |--------|-------------|
 | **Open Terminal** | Launch the distribution in the VS Code integrated terminal (opens in home directory) |
-| **Connect to WSL** | Open a VS Code window connected to the distribution via the WSL remote extension |
+| **Connect to WSL** | Open a VS Code window connected to the distribution via the WSL remote extension. For distributions with interop disabled it connects over SSH instead (see [Connecting when interop is disabled](#connecting-when-interop-is-disabled-remote-ssh)) |
+| **Connect to WSL via SSH** | Connect over the Remote - SSH extension regardless of the interop setting; sets up sshd inside the distribution on first use |
 | **WSL Settings** | Visual settings editor for `.wslconfig` |
 | **Edit wsl.conf** | Edit per-distribution settings in a local copy; saving writes it back to `/etc/wsl.conf` as root and offers to restart the distribution. Works when the default user is not root, and independently of the automount/interop settings that wsl.conf itself controls |
 
-> **If you disable `[interop]` or `[automount]` in wsl.conf:** the WSL remote extension normally starts its server through a script that depends on those features, so **Connect to WSL** can stop working after the distribution restarts. The fix is the WSL extension's scriptless startup mode — add `"remote.WSL.experimental.scriptLessStartup": true` to your VS Code settings (Settings → search "scriptless"). "Edit wsl.conf" itself is not affected: it writes over stdin precisely so you can always edit the settings back.
+### Connecting when interop is disabled (Remote-SSH)
+
+Setting `[interop] enabled=false` in wsl.conf keeps tools inside the distribution (Claude Code, npm, git, …) from ever seeing Windows executables or `/mnt/c`. It also breaks the WSL remote extension: its server startup script needs Windows executables and `/mnt/c`, so the window fails with *WebSocket close with status code 1006*.
+
+WSL Manager handles this by connecting through the [Remote - SSH](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh) extension instead:
+
+- The tree shows an **Interop: disabled** detail row for such distributions, **Connect to WSL** is greyed out in the context menu, and **Connect to WSL via SSH** is the one to use (from the Command Palette, **Connect to WSL** switches automatically).
+- **First use** asks for confirmation, then prepares the distribution: installs `openssh-server` and, if the image lacks them, `tar`/`gzip`/`curl` (the VS Code Server cannot be unpacked without them); configures sshd on a port of its own with key authentication only; authorizes your `~/.ssh/id_ed25519.pub` (generated if missing) for the default user.
+- On the Windows side it writes a `Host wsl-<distro>` entry into a marked block of `~/.ssh/config`, registers the host in `remote.SSH.remotePlatform`, checks the connection with `ssh`, and opens the window.
+- WSL stops a distribution once its last session ends, which would take sshd down with it, so the extension keeps a hidden background session open while the distribution is in use. **Stop** and **Shutdown All** end it.
+
+Each distribution gets its own port (allocated from `wslManager.ssh.portRangeStart`, default 2222, and read back from the distribution's sshd configuration), so this works under both NAT and mirrored networking with nothing to keep in sync on the Windows side. Sessions opened through the extension's ssh entry also get `OPENSSL_CONF=/dev/null`, which works around a VS Code CLI hang on distributions whose OpenSSL config includes crypto-policies (openSUSE, Fedora family); nothing else is affected.
+
+To keep using the WSL remote extension instead, turn off `wslManager.ssh.useWhenInteropDisabled` and enable that extension's scriptless startup (`"remote.WSL.experimental.scriptLessStartup": true`). **Edit wsl.conf** works either way, so you can always change the setting back.
+
+### Supported distributions
+
+Every distribution offered by `wsl --list --online` has been verified with both connection modes; the full table is in [docs/distro-verification.md](docs/distro-verification.md). Two things to know:
+
+| Distribution | Note |
+|--------|-------------|
+| openSUSE Tumbleweed / Leap 16.0, SUSE Linux Enterprise 15 SP7 / 16.0 | The images ship without `tar` and `gzip`, which the WSL remote extension needs to unpack its server and cannot install itself. Run `sudo zypper in tar gzip` once, or use **Connect to WSL via SSH** (its setup installs them). |
+| Oracle Linux 7.9 | glibc 2.17; the VS Code Server requires 2.28 or newer, so neither connection mode can run it. |
+
+Legacy, appx-packaged distributions (Oracle Linux, SUSE Linux Enterprise 15 SP6) are installed through their launcher and then renamed with the export/import path; only Ubuntu images ship cloud-init, every other image sets up its first user through its own first-run wizard.
 
 ## Usage
 
@@ -213,7 +240,7 @@ Step 4: Select cloud-init config (saved configs / file / skip)
 Step 5: Cache/fresh choice or install directory (if applicable)
 Step 6: Username + password (only when no cloud-init and no OOBE)
   ↓
-Install → Configure .wslconfig → User setup or cloud-init → Ready
+Install → Configure .wslconfig → cloud-init, or the distribution's own first-run setup in a terminal → Ready
 ```
 
 ## Settings
@@ -228,6 +255,8 @@ Install → Configure .wslconfig → User setup or cloud-init → Ready
 | `wslManager.cache.expiryDays` | `30` | Days before a cached image is considered stale (1–365) |
 | `wslManager.containers.enabled` | `true` | Show the Containers and Images sections (requires wslc) |
 | `wslManager.containers.wslcPath` | `""` | Override the path to `wslc.exe` (advanced; empty = auto-detect) |
+| `wslManager.ssh.useWhenInteropDisabled` | `true` | Connect over Remote-SSH when a distribution has `[interop] enabled=false` |
+| `wslManager.ssh.portRangeStart` | `2222` | First port tried when assigning an SSH port to a distribution |
 
 ## Requirements
 
@@ -241,6 +270,7 @@ The container features are optional and detected at runtime — without them the
 |---------|------------------------|
 | Containers / Images sections | A WSL version that ships `wslc.exe` (WSL container is in public preview: `wsl --update --pre-release`) |
 | Connect VS Code to Container | The [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension, **pre-release version** (it is the version that recognizes wslc as a container runtime) |
+| Connect to WSL via SSH | The [Remote - SSH](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh) extension and the Windows OpenSSH client (`ssh.exe`, included in Windows 10/11) |
 
 ## License
 
